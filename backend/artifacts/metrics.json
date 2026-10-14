@@ -1,0 +1,152 @@
+{
+  "model_name": "Random Survival Forest",
+  "evaluation": "5-fold cross-validation x 3 repeats on de-duplicated patients; every number is an average over held-out folds. C-index: 0.5 = coin flip, 1.0 = perfect ranking of who dies first. Brier score: lower is better (compare with the no-skill value).",
+  "target": "time from diagnosis to death from any cause (patients alive at last follow-up are censored)",
+  "data": {
+    "rows_in_file": 15054,
+    "unique_patients": 2507,
+    "duplicate_rows_removed": 12547,
+    "deaths": 1669,
+    "censored_alive": 838,
+    "median_follow_up_months": 89.0,
+    "max_follow_up_months": 356.0
+  },
+  "cross_validation": {
+    "random_survival_forest": {
+      "c_index": 0.7117,
+      "auc_3y": 0.6842,
+      "brier_3y": 0.0953,
+      "brier_noskill_3y": 0.1159,
+      "auc_5y": 0.7888,
+      "brier_5y": 0.1443,
+      "brier_noskill_5y": 0.2271,
+      "auc_10y": 0.7812,
+      "brier_10y": 0.1819,
+      "brier_noskill_10y": 0.2493,
+      "c_index_std": 0.0117
+    },
+    "cox_proportional_hazards": {
+      "c_index": 0.6991,
+      "auc_3y": 0.6641,
+      "brier_3y": 0.1121,
+      "brier_noskill_3y": 0.1159,
+      "auc_5y": 0.7894,
+      "brier_5y": 0.1759,
+      "brier_noskill_5y": 0.2271,
+      "auc_10y": 0.7681,
+      "brier_10y": 0.1964,
+      "brier_noskill_10y": 0.2493,
+      "c_index_std": 0.0138
+    }
+  },
+  "headline": {
+    "c_index": 0.7117,
+    "auc_3y": 0.6842,
+    "brier_3y": 0.0953,
+    "brier_noskill_3y": 0.1159,
+    "auc_5y": 0.7888,
+    "brier_5y": 0.1443,
+    "brier_noskill_5y": 0.2271,
+    "auc_10y": 0.7812,
+    "brier_10y": 0.1819,
+    "brier_noskill_10y": 0.2493,
+    "c_index_std": 0.0117
+  },
+  "calibration": {
+    "risk_5y_by_quintile": [
+      {
+        "patients": 502,
+        "mean_predicted": 0.089,
+        "observed_kaplan_meier": 0.069
+      },
+      {
+        "patients": 501,
+        "mean_predicted": 0.178,
+        "observed_kaplan_meier": 0.137
+      },
+      {
+        "patients": 501,
+        "mean_predicted": 0.279,
+        "observed_kaplan_meier": 0.249
+      },
+      {
+        "patients": 501,
+        "mean_predicted": 0.429,
+        "observed_kaplan_meier": 0.418
+      },
+      {
+        "patients": 502,
+        "mean_predicted": 0.764,
+        "observed_kaplan_meier": 0.859
+      }
+    ],
+    "risk_10y_by_quintile": [
+      {
+        "patients": 502,
+        "mean_predicted": 0.233,
+        "observed_kaplan_meier": 0.214
+      },
+      {
+        "patients": 501,
+        "mean_predicted": 0.378,
+        "observed_kaplan_meier": 0.306
+      },
+      {
+        "patients": 501,
+        "mean_predicted": 0.515,
+        "observed_kaplan_meier": 0.52
+      },
+      {
+        "patients": 501,
+        "mean_predicted": 0.656,
+        "observed_kaplan_meier": 0.676
+      },
+      {
+        "patients": 502,
+        "mean_predicted": 0.866,
+        "observed_kaplan_meier": 0.931
+      }
+    ],
+    "risk_groups_10y": {
+      "lower": {
+        "patients": 836,
+        "observed_10y_risk_kaplan_meier": 0.24,
+        "observed_5y_risk_kaplan_meier": 0.102
+      },
+      "intermediate": {
+        "patients": 835,
+        "observed_10y_risk_kaplan_meier": 0.505,
+        "observed_5y_risk_kaplan_meier": 0.246
+      },
+      "higher": {
+        "patients": 836,
+        "observed_10y_risk_kaplan_meier": 0.844,
+        "observed_5y_risk_kaplan_meier": 0.692
+      }
+    }
+  },
+  "inputs": [
+    "Age at Diagnosis",
+    "Tumor Size",
+    "Tumor Stage",
+    "Neoplasm Histologic Grade",
+    "Lymph nodes examined positive",
+    "Mutation Count",
+    "Inferred Menopausal State",
+    "Cancer Type Detailed",
+    "ER Status",
+    "PR Status",
+    "HER2 Status",
+    "Chemotherapy",
+    "Hormone Therapy",
+    "Radio Therapy",
+    "Type of Breast Surgery"
+  ],
+  "trained_with": {
+    "python": "3.13.16",
+    "scikit_learn": "1.9.1",
+    "scikit_survival": "0.28.0",
+    "pandas": "3.0.5",
+    "numpy": "2.5.3"
+  }
+}
