@@ -66,7 +66,7 @@ Time-dependent AUC on TCGA: 0.72 at 3 years and 0.74 at 5 years.
 - Beyond about 10-15 years few patients remain under observation, so long-term estimates are less certain.
 - Sex = Male and "No surgery" are accepted by the form but flagged with a note, because they never occur in the training data.
 - Feature effects are statistical associations, not causes. For example, patients who received hormone therapy were not healthier, because treatment is given to more serious cases.
-- With about 2,500 patients and 15 inputs, discrimination is limited (C-index around 0.72). Larger data (for example SEER) and external validation on a second dataset would make the model more trustworthy.
+- With about 2,500 patients and 15 inputs, discrimination is limited (C-index around 0.72). The model has been externally validated on TCGA-BRCA (see above); a larger cohort such as SEER, with longer follow-up, would be the next step toward trustworthy absolute probabilities.
 
 ## Project structure
 
