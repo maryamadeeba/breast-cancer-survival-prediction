@@ -1,4 +1,4 @@
-"""Loads the trained Random Survival Forest and turns a patient into a survival curve + explanation."""
+"""Loads the trained Extra Survival Trees and turns a patient into a survival curve + explanation."""
 from __future__ import annotations
 
 import json
@@ -10,7 +10,7 @@ import joblib
 import numpy as np
 import pandas as pd
 
-from .features import CATEGORICAL_INPUTS, MODEL_INPUTS, NUMERIC_INPUTS, PLAYERS
+from .features import CATEGORICAL_INPUTS, MODEL_INPUTS, NUMERIC_INPUTS, PLAYERS, recalibrate
 
 log = logging.getLogger("survival")
 
@@ -45,6 +45,7 @@ class SurvivalModel:
         self.horizon_years: int = artifact["horizon_years"]
         self.milestone_years: list[int] = artifact["milestone_years"]
         self.curve_months: list[int] = artifact["curve_months"]
+        self.recal: dict | None = artifact.get("recalibration")  # absent in models saved by v1
         self._forest = self.pipeline.named_steps["model"]
         self._times = np.asarray(self._forest.unique_times_, dtype=float)
 
@@ -67,6 +68,9 @@ class SurvivalModel:
         idx = np.searchsorted(self._times, np.asarray(months, dtype=float), side="right") - 1
         out = S[:, np.clip(idx, 0, None)]
         out[:, idx < 0] = 1.0  # before the first event everybody is alive
+        if self.recal:
+            i10 = int(np.searchsorted(self._times, 12.0 * self.horizon_years, side="right")) - 1
+            out = recalibrate(out, S[:, max(i10, 0)], self.recal["slope"], self.recal["centre"])
         return out
 
     def _frame(self, row: dict) -> pd.DataFrame:
@@ -139,7 +143,7 @@ class SurvivalModel:
         h = self.metrics.get("headline") or {}
         data = self.metrics.get("data", {})
         return {
-            "name": "Random Survival Forest",
+            "name": "Extra Survival Trees",
             "cIndex": h.get("c_index"),
             "auc5Year": h.get("auc_5y"),
             "auc10Year": h.get("auc_10y"),

@@ -4,10 +4,7 @@ A web app that estimates a breast cancer patient's **survival curve**: the chanc
 
 - **Frontend:** React + TypeScript + Vite + Tailwind + shadcn-ui + Recharts
 - **Backend:** Python FastAPI that serves the trained model
-- **Model:** Random Survival Forest (scikit-survival), 200 trees, benchmarked against a penalised Cox proportional-hazards baseline
-- **Features:** 15 clinical inputs plus 7 engineered features (including the Nottingham Prognostic Index)
-- **Training data:** METABRIC — 2,507 unique patients, 1,669 deaths, median follow-up 89 months
-- **External validation:** a second, independent cohort (see below)
+- **Model (v2):** Extra Survival Trees (scikit-survival) with a calibration step, compared against a Cox proportional-hazards baseline, trained on the METABRIC dataset
 - **Explainability:** exact Shapley (SHAP-style) values for every prediction
 
 > Research and education project. It is **not** a medical device and must not be used for clinical decisions.
@@ -22,52 +19,45 @@ Inputs (15): age at diagnosis, menopausal state, tumor size, tumor stage, histol
 
 5-fold cross-validation repeated 3 times on 2,507 de-duplicated patients (1,669 deaths). Every number is measured on patients the model had not seen.
 
-| Metric | Random Survival Forest | Cox regression | No-skill reference |
-|---|---|---|---|
-| C-index (0.5 = chance, 1 = perfect) | **0.712** | 0.699 | 0.500 |
-| Time-dependent AUC at 5 years | 0.789 | 0.789 | 0.500 |
-| Time-dependent AUC at 10 years | **0.781** | 0.768 | 0.500 |
-| Brier score at 5 years (lower is better) | **0.144** | 0.176 | 0.227 |
-| Brier score at 10 years | **0.182** | 0.196 | 0.249 |
+| Metric | Extra Survival Trees (v2) | Random Survival Forest (v1) | Cox regression | No-skill reference |
+|---|---|---|---|---|
+| C-index (0.5 = chance, 1 = perfect) | **0.720** | 0.712 | 0.699 | 0.500 |
+| Time-dependent AUC at 5 years | **0.809** | 0.789 | 0.789 | 0.500 |
+| Time-dependent AUC at 10 years | **0.798** | 0.781 | 0.768 | 0.500 |
+| Brier score at 5 years (lower is better) | 0.144 | 0.144 | 0.176 | 0.227 |
+| Brier score at 10 years | 0.182 | 0.182 | 0.196 | 0.249 |
 
-The forest ranks patients better than Cox and, more importantly, gives better calibrated probabilities (lower Brier score). Its 3-year AUC is weaker (0.684), because early deaths are harder to predict from these inputs.
+**What changed in v2.** A model audit showed that adding more patients would not help (the learning curve is flat), so the limit is the information in the 15 inputs. Tuning and comparing 13 model settings in repeated cross-validation, Extra Survival Trees ranked patients best (v1 forest 0.714, gradient boosting 0.713, Cox 0.699 in the same splits), and blending models added nothing. The model also under-spread its risks (low-risk patients looked a bit riskier than they were, and the sickest patients looked a bit safer), so a one-parameter calibration step (slope 1.24, fitted on out-of-fold predictions) now stretches the curves. It does not change who ranks above whom; it only fixes the probabilities. The 3-year AUC is weaker (0.673), because early deaths are harder to predict from these inputs. The C-index gain is small compared with its fold-to-fold spread (about 0.01), so treat it as a modest, consistent improvement rather than a leap.
 
-**Calibration** (out-of-fold, checked against Kaplan-Meier curves of the actual patients): the predicted 10-year death risk matches the observed risk closely in the middle of the range. For the sickest fifth of patients the model slightly underestimates risk (predicted 87%, observed 93%).
+**Calibration** (out-of-fold, checked against Kaplan-Meier curves of the actual patients): the predicted 10-year death risk matches the observed risk closely in the middle of the range (50.2% predicted vs 50.1% observed). For the sickest fifth the model still slightly underestimates risk (predicted 89%, observed 94%).
 
 | Risk group (thirds of predicted 10-year risk) | Observed risk of death by 5 years | by 10 years |
 |---|---|---|
-| Lower | 10% | 24% |
-| Intermediate | 25% | 51% |
-| Higher | 69% | 84% |
+| Lower | 11% | 26% |
+| Intermediate | 25% | 48% |
+| Higher | 68% | 85% |
 
 The full report, including the calibration tables, is in `backend/artifacts/metrics.json`.
 
-## External validation
+## External validation on TCGA-BRCA (a different study)
 
-Cross-validation measures performance on unseen patients from the **same**
-dataset. The harder question is whether the model survives contact with a
-**different** cohort — different hospitals, different protocols, different
-treatment eras.
+To check that the model is not just memorising METABRIC, it was tested on **TCGA breast cancer** (1,071 women, 150 deaths, median follow-up only 29 months), a separate study with different hospitals and a different era. Run it yourself: `cd backend && python external_validation.py`.
 
-The model was evaluated, without retraining, on an independent breast cancer
-cohort.
+TCGA has no tumor grade, mutation count, chemotherapy or hormone-therapy field, so a version of the model using only the inputs both studies share (age, menopausal state, stage, tumor size, positive nodes, cancer type, ER/PR/HER2, surgery) was trained on METABRIC and tested on TCGA. Tumor size and node counts are approximated from T and N stage, so treat this as a good-faith check, not a perfect replication.
 
-**What held:** discrimination. The model's ability to rank which patients are
-at higher risk transferred largely intact (C-index ≈ 0.71 against 0.5 for a
-coin flip).
+| Test on TCGA (never seen in training) | C-index (95% interval) |
+|---|---|
+| Extra Survival Trees, shared inputs | **0.709** (0.661-0.756) |
+| Deployed model, missing inputs filled with typical values | 0.708 (0.655-0.759) |
+| Cox regression, shared inputs | 0.696 (0.637-0.743) |
+| Tumor stage alone | 0.682 (0.633-0.729) |
+| Same model, internal METABRIC cross-validation | 0.708 |
 
-**What did not:** calibration. The absolute survival percentages did not carry
-over — the model systematically overestimated risk on the new cohort. A patient
-the model places in the higher-risk group is still, correctly, higher risk; but
-the specific probability attached to that prediction should not be read as
-accurate outside METABRIC.
+Time-dependent AUC on TCGA: 0.72 at 3 years and 0.74 at 5 years.
 
-This is the expected failure mode for survival models moved between cohorts,
-and it is the reason the app presents risk *groups* alongside the curve rather
-than the percentage alone. Recalibrating on the target cohort — for example by
-refitting the baseline hazard — would be the standard fix.
+**What this shows:** the model's ability to rank who is at higher risk carries over to a new study (0.709 vs 0.708 inside METABRIC). It is only slightly above tumor stage alone, and the intervals overlap, so the model adds a modest amount of information over a single staging number.
 
-Reproduce with: `cd backend && python validate_external.py`
+**What it does not show:** the absolute percentages do not transfer. On TCGA the model predicted a 5-year death risk of 48% for its highest-risk third, but about 27% actually died (15% vs 9% and 26% vs 18% in the other thirds). METABRIC patients were treated in an earlier era and deaths from any cause are counted, so survival was lower than in TCGA. TCGA also has only 253 patients followed for 5 years, so these figures are uncertain. Use the risk groups and curves to compare patients, not as exact forecasts, and recalibrate on local data before any real use.
 
 ## Things worth knowing
 
@@ -76,19 +66,20 @@ Reproduce with: `cd backend && python validate_external.py`
 - Beyond about 10-15 years few patients remain under observation, so long-term estimates are less certain.
 - Sex = Male and "No surgery" are accepted by the form but flagged with a note, because they never occur in the training data.
 - Feature effects are statistical associations, not causes. For example, patients who received hormone therapy were not healthier, because treatment is given to more serious cases.
-- With about 2,500 patients and 15 inputs, discrimination is limited (C-index around 0.71). Larger data (for example SEER) and external validation on a second dataset would make the model more trustworthy.
+- With about 2,500 patients and 15 inputs, discrimination is limited (C-index around 0.72). Larger data (for example SEER) and external validation on a second dataset would make the model more trustworthy.
 
 ## Project structure
 
 ```
 backend/
   app/features.py      feature definitions, survival-data loader, engineered features (e.g. Nottingham Prognostic Index)
-  app/ml.py            loads the model, predicts survival curves, computes Shapley explanations
+  app/ml.py            loads the model, predicts + recalibrates survival curves, computes Shapley explanations
   app/schemas.py       request validation and form-to-model mapping
   app/main.py          FastAPI app: /api/predict, /api/metrics, /api/health
   train_model.py       trains + cross-validates + checks calibration + saves artifacts/
   artifacts/           model.joblib (trained model) and metrics.json (results)
   data/                Breast_Cancer_METABRIC_Epic_Hospital.csv
+  external_validation.py  checks the model on TCGA-BRCA and writes artifacts/external_validation.json
   tests/test_api.py    backend tests
 src/                   React frontend (src/lib/mlModel.ts calls the API; src/components/PredictionResult.tsx draws the curve)
 ```
@@ -122,7 +113,7 @@ If Vite prints `EAFNOSUPPORT` or cannot bind the address, run `npx vite --host 1
 
 1. http://127.0.0.1:8000/api/health should show `{"status":"ok","modelLoaded":true}`.
 2. http://127.0.0.1:8000/docs lets you try `/api/predict` interactively.
-3. In the app, the result page shows the 10-year survival percentage, the risk group, a survival curve with 1/3/5/10-year milestones, and the model's real metrics (C-index 0.712, 2,507 patients).
+3. In the app, the result page shows the 10-year survival percentage, the risk group, a survival curve with 1/3/5/10-year milestones, and the model's real metrics (C-index 0.720, 2,507 patients).
 4. Try a young, low-stage, ER-positive patient (a high, flat curve, "Lower risk") and an older patient with many positive nodes and triple-negative receptors (a steep curve, "Higher risk").
 5. Run the tests: `cd backend && python -m pytest -q` (10 tests) and, in the project root, `npm test` (3 tests).
 6. Stop the backend and press the button again: the app shows "Cannot reach the prediction server".
@@ -153,9 +144,7 @@ It returns `survivalProbability` (10 years), `deathProbability`, `riskLevel` (`l
 
 ## Roadmap
 
-1. Recalibrate on the external cohort (refit baseline hazard) so absolute
-   probabilities transfer, not just the ranking.
-2. Train on a larger cohort such as SEER to improve discrimination beyond
-   C-index 0.71.
-3. Add confidence intervals around the survival curve (e.g. by bootstrapping).
-4. Separate cancer-specific death from other-cause death (competing risks).
+0. Known limits found in the audit: accuracy is lower for patients 65+ (C-index 0.66), stage 3-4 (0.60) and 4+ positive nodes (0.65), and drops to about 0.63-0.68 when a whole hospital cohort is held out. Optional molecular inputs (PAM50 subtype, Integrative Cluster, 3-gene classifier) would add about +0.017 C-index but need lab tests that the form does not ask for.
+1. Add a second external check on SEER (needs a signed data-use agreement) and recalibrate the probabilities for modern patients.
+2. Add confidence intervals around the survival curve (for example by bootstrapping).
+3. Separate cancer-specific death from deaths of other causes (competing-risks model).

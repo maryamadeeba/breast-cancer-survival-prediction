@@ -319,7 +319,7 @@ export function PredictionResultScreen({
               <p className="text-sm text-muted-foreground">
                 <span className="font-medium text-foreground">Note:</span> This is a statistical estimate for
                 patients with similar characteristics, not a certainty for any individual. It comes from a
-                Random Survival Forest trained on the METABRIC dataset ({patients} patients, including those
+                Extra Survival Trees model trained on the METABRIC dataset ({patients} patients, including those
                 still alive at last follow-up). Feature effects show associations,
                 not causes. For clinical decisions, always consult with healthcare professionals.
               </p>

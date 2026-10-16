@@ -1,0 +1,85 @@
+{
+ "tcga_patients": 1071,
+ "tcga_deaths": 150,
+ "tcga_median_followup_months": 29.0,
+ "tcga_followup_ge_60m": 253,
+ "availability": {
+  "Age at Diagnosis": 1.0,
+  "Tumor Size": 1.0,
+  "Tumor Stage": 0.98,
+  "Neoplasm Histologic Grade": 0.0,
+  "Lymph nodes examined positive": 0.98,
+  "Mutation Count": 0.0,
+  "Inferred Menopausal State": 0.86,
+  "Cancer Type Detailed": 1.0,
+  "ER Status": 0.96,
+  "PR Status": 0.95,
+  "HER2 Status": 0.87,
+  "Chemotherapy": 0.0,
+  "Hormone Therapy": 0.0,
+  "Radio Therapy": 0.15,
+  "Type of Breast Surgery": 0.71
+ },
+ "results": {
+  "A_deployed_v2_missing_inputs_imputed": [
+   0.708,
+   0.655,
+   0.759
+  ],
+  "B_extra_trees_common_features": [
+   0.709,
+   0.661,
+   0.756
+  ],
+  "B_cox_common_features": [
+   0.696,
+   0.637,
+   0.743
+  ],
+  "B_internal_metabric_cv_cindex": [
+   0.708,
+   0.008
+  ],
+  "benchmark_stage_only": [
+   0.682,
+   0.633,
+   0.729
+  ],
+  "benchmark_nodes_only": [
+   0.624,
+   0.563,
+   0.683
+  ],
+  "benchmark_age_only": [
+   0.638,
+   0.586,
+   0.69
+  ],
+  "C_ipcw_tau60_ET": 0.728,
+  "AUC_3y_ET": 0.723,
+  "AUC_5y_ET": 0.736,
+  "C_ipcw_tau60_Cox": 0.713,
+  "AUC_3y_Cox": 0.709,
+  "AUC_5y_Cox": 0.717,
+  "D_calibration_5y_tertiles": [
+   {
+    "n": 357,
+    "mean_predicted_5y_risk": 0.152,
+    "observed_5y_risk_KM": 0.09,
+    "deaths": 34
+   },
+   {
+    "n": 357,
+    "mean_predicted_5y_risk": 0.263,
+    "observed_5y_risk_KM": 0.183,
+    "deaths": 52
+   },
+   {
+    "n": 357,
+    "mean_predicted_5y_risk": 0.481,
+    "observed_5y_risk_KM": 0.271,
+    "deaths": 64
+   }
+  ]
+ }
+}

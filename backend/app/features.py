@@ -119,3 +119,18 @@ def load_survival_frame(csv_path: str) -> tuple[pd.DataFrame, np.ndarray, np.nda
         "max_follow_up_months": float(months.max()),
     }
     return X, months, died, info
+
+
+def recalibrate(S, s10, slope: float, centre: float):
+    """Stretch/shrink survival curves so predicted risks line up with what really happened.
+
+    Each patient's cumulative hazard H(t) is multiplied by g = exp((slope - 1) * (log H(10y) - centre)).
+    The ranking of patients never changes; only the probabilities do. `slope` and `centre` are learned
+    from out-of-fold predictions in train_model.py (slope > 1 means the raw model was not extreme enough).
+    """
+    import numpy as np
+
+    log_h10 = np.log(-np.log(np.clip(np.asarray(s10, dtype=float), 1e-4, 1 - 1e-4)))
+    g = np.exp((slope - 1.0) * (log_h10 - centre))
+    H = -np.log(np.clip(np.asarray(S, dtype=float), 1e-9, 1.0))
+    return np.exp(-H * g.reshape(-1, *([1] * (H.ndim - 1))))

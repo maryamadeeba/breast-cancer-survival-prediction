@@ -1,5 +1,5 @@
 {
-  "model_name": "Random Survival Forest",
+  "model_name": "Extra Survival Trees",
   "evaluation": "5-fold cross-validation x 3 repeats on de-duplicated patients; every number is an average over held-out folds. C-index: 0.5 = coin flip, 1.0 = perfect ranking of who dies first. Brier score: lower is better (compare with the no-skill value).",
   "target": "time from diagnosis to death from any cause (patients alive at last follow-up are censored)",
   "data": {
@@ -12,18 +12,18 @@
     "max_follow_up_months": 356.0
   },
   "cross_validation": {
-    "random_survival_forest": {
-      "c_index": 0.7117,
-      "auc_3y": 0.6842,
-      "brier_3y": 0.0953,
+    "extra_survival_trees": {
+      "c_index": 0.7198,
+      "auc_3y": 0.6733,
+      "brier_3y": 0.0969,
       "brier_noskill_3y": 0.1159,
-      "auc_5y": 0.7888,
-      "brier_5y": 0.1443,
+      "auc_5y": 0.809,
+      "brier_5y": 0.1469,
       "brier_noskill_5y": 0.2271,
-      "auc_10y": 0.7812,
-      "brier_10y": 0.1819,
+      "auc_10y": 0.7978,
+      "brier_10y": 0.1845,
       "brier_noskill_10y": 0.2493,
-      "c_index_std": 0.0117
+      "c_index_std": 0.011
     },
     "cox_proportional_hazards": {
       "c_index": 0.6991,
@@ -40,88 +40,97 @@
     }
   },
   "headline": {
-    "c_index": 0.7117,
-    "auc_3y": 0.6842,
-    "brier_3y": 0.0953,
+    "c_index": 0.7198,
+    "auc_3y": 0.6733,
+    "brier_3y": 0.0969,
     "brier_noskill_3y": 0.1159,
-    "auc_5y": 0.7888,
-    "brier_5y": 0.1443,
+    "auc_5y": 0.809,
+    "brier_5y": 0.1442,
     "brier_noskill_5y": 0.2271,
-    "auc_10y": 0.7812,
-    "brier_10y": 0.1819,
+    "auc_10y": 0.7978,
+    "brier_10y": 0.1845,
     "brier_noskill_10y": 0.2493,
-    "c_index_std": 0.0117
+    "c_index_std": 0.011,
+    "brier_5y_cv_uncalibrated": 0.1469
+  },
+  "recalibration": {
+    "slope": 1.235110813982843,
+    "centre": -0.3095925247129575,
+    "brier_5y_raw": 0.1471,
+    "brier_5y_recalibrated": 0.1442,
+    "brier_10y_raw": 0.1851,
+    "brier_10y_recalibrated": 0.1822
   },
   "calibration": {
     "risk_5y_by_quintile": [
       {
         "patients": 502,
-        "mean_predicted": 0.089,
-        "observed_kaplan_meier": 0.069
+        "mean_predicted": 0.098,
+        "observed_kaplan_meier": 0.079
       },
       {
         "patients": 501,
-        "mean_predicted": 0.178,
-        "observed_kaplan_meier": 0.137
+        "mean_predicted": 0.179,
+        "observed_kaplan_meier": 0.146
       },
       {
         "patients": 501,
-        "mean_predicted": 0.279,
-        "observed_kaplan_meier": 0.249
+        "mean_predicted": 0.282,
+        "observed_kaplan_meier": 0.25
       },
       {
         "patients": 501,
-        "mean_predicted": 0.429,
-        "observed_kaplan_meier": 0.418
+        "mean_predicted": 0.428,
+        "observed_kaplan_meier": 0.403
       },
       {
         "patients": 502,
-        "mean_predicted": 0.764,
-        "observed_kaplan_meier": 0.859
+        "mean_predicted": 0.792,
+        "observed_kaplan_meier": 0.852
       }
     ],
     "risk_10y_by_quintile": [
       {
         "patients": 502,
-        "mean_predicted": 0.233,
-        "observed_kaplan_meier": 0.214
+        "mean_predicted": 0.235,
+        "observed_kaplan_meier": 0.218
       },
       {
         "patients": 501,
-        "mean_predicted": 0.378,
-        "observed_kaplan_meier": 0.306
+        "mean_predicted": 0.368,
+        "observed_kaplan_meier": 0.336
       },
       {
         "patients": 501,
-        "mean_predicted": 0.515,
-        "observed_kaplan_meier": 0.52
+        "mean_predicted": 0.502,
+        "observed_kaplan_meier": 0.501
       },
       {
         "patients": 501,
-        "mean_predicted": 0.656,
-        "observed_kaplan_meier": 0.676
+        "mean_predicted": 0.654,
+        "observed_kaplan_meier": 0.647
       },
       {
         "patients": 502,
-        "mean_predicted": 0.866,
-        "observed_kaplan_meier": 0.931
+        "mean_predicted": 0.891,
+        "observed_kaplan_meier": 0.942
       }
     ],
     "risk_groups_10y": {
       "lower": {
         "patients": 836,
-        "observed_10y_risk_kaplan_meier": 0.24,
-        "observed_5y_risk_kaplan_meier": 0.102
+        "observed_10y_risk_kaplan_meier": 0.259,
+        "observed_5y_risk_kaplan_meier": 0.109
       },
       "intermediate": {
         "patients": 835,
-        "observed_10y_risk_kaplan_meier": 0.505,
-        "observed_5y_risk_kaplan_meier": 0.246
+        "observed_10y_risk_kaplan_meier": 0.482,
+        "observed_5y_risk_kaplan_meier": 0.253
       },
       "higher": {
         "patients": 836,
-        "observed_10y_risk_kaplan_meier": 0.844,
-        "observed_5y_risk_kaplan_meier": 0.692
+        "observed_10y_risk_kaplan_meier": 0.848,
+        "observed_5y_risk_kaplan_meier": 0.678
       }
     }
   },

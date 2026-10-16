@@ -105,7 +105,7 @@ def test_receptor_status_is_used(client):
 
 def test_metrics_endpoint(client):
     m = client.get("/api/metrics").json()
-    rsf, cox = m["cross_validation"]["random_survival_forest"], m["cross_validation"]["cox_proportional_hazards"]
+    rsf, cox = m["cross_validation"]["extra_survival_trees"], m["cross_validation"]["cox_proportional_hazards"]
     assert rsf["c_index"] > 0.68 and rsf["c_index"] > cox["c_index"]
     assert rsf["brier_5y"] < rsf["brier_noskill_5y"]
     rates = m["calibration"]["risk_groups_10y"]
