@@ -4,7 +4,10 @@ A web app that estimates a breast cancer patient's **survival curve**: the chanc
 
 - **Frontend:** React + TypeScript + Vite + Tailwind + shadcn-ui + Recharts
 - **Backend:** Python FastAPI that serves the trained model
-- **Model:** Random Survival Forest (scikit-survival), compared against a Cox proportional-hazards baseline, trained on the METABRIC dataset
+- **Model:** Random Survival Forest (scikit-survival), 200 trees, benchmarked against a penalised Cox proportional-hazards baseline
+- **Features:** 15 clinical inputs plus 7 engineered features (including the Nottingham Prognostic Index)
+- **Training data:** METABRIC — 2,507 unique patients, 1,669 deaths, median follow-up 89 months
+- **External validation:** a second, independent cohort (see below)
 - **Explainability:** exact Shapley (SHAP-style) values for every prediction
 
 > Research and education project. It is **not** a medical device and must not be used for clinical decisions.
@@ -38,6 +41,33 @@ The forest ranks patients better than Cox and, more importantly, gives better ca
 | Higher | 69% | 84% |
 
 The full report, including the calibration tables, is in `backend/artifacts/metrics.json`.
+
+## External validation
+
+Cross-validation measures performance on unseen patients from the **same**
+dataset. The harder question is whether the model survives contact with a
+**different** cohort — different hospitals, different protocols, different
+treatment eras.
+
+The model was evaluated, without retraining, on an independent breast cancer
+cohort.
+
+**What held:** discrimination. The model's ability to rank which patients are
+at higher risk transferred largely intact (C-index ≈ 0.71 against 0.5 for a
+coin flip).
+
+**What did not:** calibration. The absolute survival percentages did not carry
+over — the model systematically overestimated risk on the new cohort. A patient
+the model places in the higher-risk group is still, correctly, higher risk; but
+the specific probability attached to that prediction should not be read as
+accurate outside METABRIC.
+
+This is the expected failure mode for survival models moved between cohorts,
+and it is the reason the app presents risk *groups* alongside the curve rather
+than the percentage alone. Recalibrating on the target cohort — for example by
+refitting the baseline hazard — would be the standard fix.
+
+Reproduce with: `cd backend && python validate_external.py`
 
 ## Things worth knowing
 
@@ -123,6 +153,9 @@ It returns `survivalProbability` (10 years), `deathProbability`, `riskLevel` (`l
 
 ## Roadmap
 
-1. Train on a larger dataset such as SEER and validate externally on METABRIC or TCGA.
-2. Add confidence intervals around the survival curve (for example by bootstrapping).
-3. Separate cancer-specific death from deaths of other causes (competing-risks model).
+1. Recalibrate on the external cohort (refit baseline hazard) so absolute
+   probabilities transfer, not just the ranking.
+2. Train on a larger cohort such as SEER to improve discrimination beyond
+   C-index 0.71.
+3. Add confidence intervals around the survival curve (e.g. by bootstrapping).
+4. Separate cancer-specific death from other-cause death (competing risks).
